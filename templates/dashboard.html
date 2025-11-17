@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Honeypot Dashboard</title>
+    <style>
+        body { font-family: Arial; margin: 0; padding: 20px; background: #f4f4f4; }
+        .header { background: #131921; color: white; padding: 20px; margin: -20px -20px 20px -20px; }
+        .header h1 { margin: 0; }
+        .header span { color: #ff9900; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+                 gap: 20px; margin-bottom: 30px; }
+        .stat-box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .stat-box h3 { margin: 0 0 10px 0; color: #666; font-size: 14px; }
+        .stat-box .number { font-size: 32px; font-weight: bold; color: #ff9900; }
+        table { width: 100%; background: white; border-collapse: collapse; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        th { background: #232f3e; color: white; padding: 12px; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid #ddd; font-size: 14px; }
+        tr:hover { background: #f9f9f9; }
+        .logout { float: right; color: white; text-decoration: none; padding: 8px 16px; 
+                  background: #dc3545; border-radius: 4px; }
+        .chart-container { background: white; padding: 20px; border-radius: 8px; 
+                          box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 20px; }
+        .bar { background: #ff9900; height: 20px; border-radius: 4px; display: inline-block; margin-left: 10px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>amazon<span>.com</span> Honeypot Dashboard</h1>
+        <a href="/logout" class="logout">Logout</a>
+    </div>
+    
+    <div class="stats">
+        <div class="stat-box">
+            <h3>Total Attacks</h3>
+            <div class="number">{{ total_attacks }}</div>
+        </div>
+        <div class="stat-box">
+            <h3>Unique IPs</h3>
+            <div class="number">{{ unique_ips }}</div>
+        </div>
+        <div class="stat-box">
+            <h3>Login Attempts</h3>
+            <div class="number">{{ login_attempts }}</div>
+        </div>
+        <div class="stat-box">
+            <h3>Trap Accesses</h3>
+            <div class="number">{{ trap_accesses }}</div>
+        </div>
+    </div>
+
+    <h2>Recent Attacks</h2>
+    <table>
+        <tr>
+            <th>Timestamp</th>
+            <th>IP Address</th>
+            <th>Type</th>
+            <th>Username</th>
+            <th>Password</th>
+            <th>URL</th>
+        </tr>
+        {% for attack in recent_attacks %}
+        <tr>
+            <td>{{ attack[1] }}</td>
+            <td>{{ attack[2] }}</td>
+            <td>{{ attack[7] }}</td>
+            <td>{{ attack[3] }}</td>
+            <td>{{ attack[4] }}</td>
+            <td>{{ attack[6] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <div class="chart-container">
+        <h2>Top Usernames Attempted</h2>
+        <div id="username-chart">
+            {% for username, count in top_usernames %}
+            <div style="margin: 10px 0;">
+                <strong>{{ username }}</strong>
+                <div class="bar" style="width: {{ (count / top_usernames[0][1] * 100) if top_usernames else 0 }}%;"></div>
+                <span style="margin-left: 10px;">{{ count }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <h2>Top Attacking IPs</h2>
+        <div id="ip-chart">
+            {% for ip, count in top_ips %}
+            <div style="margin: 10px 0;">
+                <strong>{{ ip }}</strong>
+                <div class="bar" style="width: {{ (count / top_ips[0][1] * 100) if top_ips else 0 }}%; background: #232f3e;"></div>
+                <span style="margin-left: 10px;">{{ count }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>
