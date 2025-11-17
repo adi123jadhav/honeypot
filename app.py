@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, session, jsonify
+from werkzeug.middleware.proxy_fix import ProxyFix
 import sqlite3
 from datetime import datetime
 from collections import Counter
@@ -6,6 +7,10 @@ import secrets
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
+
+# Configure ProxyFix for deployment behind reverse proxy (like Render)
+# This ensures request.remote_addr contains the real client IP, not the proxy IP
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 # Database setup
 def init_db():
@@ -29,11 +34,19 @@ init_db()
 def log_attack(username='', password='', url='', attack_type=''):
     conn = sqlite3.connect('honeypot.db')
     c = conn.cursor()
+    
+    # Get real IP address - ProxyFix middleware handles this automatically
+    # but we'll add a fallback just in case
+    if request.headers.get('X-Forwarded-For'):
+        ip_address = request.headers.get('X-Forwarded-For').split(',')[0].strip()
+    else:
+        ip_address = request.remote_addr
+    
     c.execute('''INSERT INTO attacks 
                  (timestamp, ip_address, username, password, user_agent, url, attack_type)
                  VALUES (?, ?, ?, ?, ?, ?, ?)''',
               (datetime.now().isoformat(),
-               request.remote_addr,
+               ip_address,
                username,
                password,
                request.headers.get('User-Agent', ''),
